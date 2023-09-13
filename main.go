@@ -12,6 +12,8 @@ import (
 
 	"go-lambda-assets/helpers"
 
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -19,6 +21,13 @@ import (
 // Initialiser function to intialise the env
 
 var db *sql.DB
+
+func init() {
+	err := initDb()
+	if err != nil {
+		log.Fatalf("Failed to initialize database connection: %v", err)
+	}
+}
 
 func initDb() error {
 	dsn := os.Getenv("DSN")
@@ -45,17 +54,6 @@ type Request struct {
 
 func Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Check for an existing db connection before running the query
-	err := db.Ping()
-	if err != nil {
-		err = initDb()
-		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: http.StatusInternalServerError,
-				Body:       "Failed to connect to the database",
-			}, err
-		}
-
-	}
 
 	// From here the global variable db is available to use
 	// Now we get JSON unmarshall the body
@@ -147,5 +145,13 @@ func Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 }
 
 func main() {
+	err := db.Ping()
+	if err != nil {
+		err = initDb()
+		if err != nil {
+			log.Fatal("Error connecting to database", err)
+		}
+	}
+
 	lambda.Start(Handler)
 }

@@ -95,6 +95,13 @@ func FetchChildLocations(locationIds []int, db *sql.DB) ([]int, error) {
 		return locationIds, nil
 	}
 
+	grandChildLocations, err := FetchChildLocations(childIds, db)
+	if err != nil {
+		return nil, err
+	}
+
+	childIds = append(childIds, grandChildLocations...)
+
 	return childIds, nil
 }
 
